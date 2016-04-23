@@ -1,0 +1,176 @@
+# Query.yaml
+#
+#
+# Copyright (C) 2005-2006 Joshua D. Abraham ( jabra@ccs.neu.edu )
+#
+# This config file is released under the terms of the GNU General
+# Public License (GPL), which is distributed with this software in the
+# file "COPYING".  The GPL specifies the terms under which users
+# may copy and use this software.
+#
+#
+# PBNJ 2.0
+# (P)orts (B)anners N' (J)unk
+#
+# Author:   Joshua D. Abraham
+# Date:     March 15, 2006
+# Updated:  November 15, 2006
+# Version:  2.04
+#
+# Configuration file for PBNJ 2.0
+# 
+# Contains all the names, descriptions and queries for PBNJ 2.0
+#
+# If you would like to submit a new query, please submit it to the link
+# below. The summary should start with QUERY: description
+#
+# http://sourceforge.net/tracker/?func=add&group_id=149390&atid=774490
+#
+#
+
+--- #YAML:1.0
+
+- name: daily_sensitive
+  desc: new sensitive services (last 48 hours)
+  sql:  |-
+        SELECT M.ip,M.host,S.port,S.service,S.state,S.protocol 
+                FROM services as S,machines as M 
+                WHERE S.port NOT IN (53, 443, 80, 700, 43, 25)
+                AND (to_date(updated_on, 'Dy Mon DD HH24:MI:SS YYYY') >= now() - interval '48 hours') 
+                AND M.mid = S.mid
+
+- name: daily_all
+  desc: new sensitive services (last 48 hours)
+  sql:  |-
+        SELECT M.ip,M.host,S.port,S.service,S.state,S.protocol
+                FROM services as S,machines as M
+                WHERE (to_date(updated_on, 'Dy Mon DD HH24:MI:SS YYYY') >= now() - interval '48 hours')
+                AND M.mid = S.mid
+
+
+- name: possiblevuln
+  desc: list all of the services that possibly, should not be running
+  sql: select * from services where service!='ssh' and state='up'
+
+# example of verion checking 
+#- name: vulnssh
+#  desc: all of the services that have old ssh running
+#  sql: |-
+#   select S.updated_on,M.ip,S.service,S.port,S.version from services as S,
+#   machines as M where service='ssh' and state='up' and version!='4.1p1'
+
+- name: sshmachines
+  desc: all the machines that have run ssh
+  sql: |-
+     select S.updated_on,M.ip,M.host,S.service,S.state,S.version from
+     services as S, machines as M where port='22' and M.mid = S.mid
+
+- name: allservices
+  desc: all services that have ever been up
+  sql: select * from services where state='up'
+
+- name: services
+  desc: basic dump of the services table
+  sql: select updated_on,service,version,banner,state from services
+
+- name: unknown_version_up
+  desc: services that have run a unknown version
+  sql: |-
+   select updated_on,service,banner from services where 
+   version='unknown version' and state='up'
+
+- name: unknown_banner_up
+  desc: services that have run a unknown banner
+  sql: |-
+   select updated_on,service,version from services where 
+   banner='unknown banner' and state='up'
+
+- name: machines
+  desc: basic dump of the machines table
+  sql: select created_on,ip,host,localh,os from machines
+
+- name: sdump
+  desc: dump of the services table
+  sql: select * from services
+  
+- name: mdump
+  desc: dump of the machines table
+  sql: select * from machines
+
+- name: servicesup
+  desc: services running on machines with a given ip or range
+  sql:  |-
+    select M.ip,M.host, S.service,S.version,S.banner from 
+    services as S,machines as M where state='up' and M.mid = S.mid 
+   
+- name: unknownversion
+  desc: all instances of services running with an unknown version
+  sql: select * from services where version='unknown version' 
+    
+- name: unknownbanner
+  desc: all instances of services running with an unknown banner
+  sql: select * from services where banner='unknown banner'
+
+- name: machine_audit
+  desc: machine audit query
+  sql: select ip,host,os from machines
+
+- name: service_audit
+  desc: serice audit query
+  sql: |-
+    select s.port,s.protocol,s.service,s.banner,s.version from services s join
+    machines m join (select mid,service,max(machine_updated)'muo' from
+    services group by mid,service)r where s.mid=r.mid and
+    s.service=r.service and s.state='up' 
+    AND s.machine_updated=r.muo and m.mid=s.mid ORDER BY s.port;
+
+- name: latestinfo_audit
+  desc: latest host and services info
+  sql:  |-
+    select S.port,S.protocol,S.service,S.state,S.banner,S.version from
+    services as S where updated_on = (select updated_on from
+    services ORDER BY updated_on DESC limit 1) ORDER BY s.port;
+
+- name: latestinfo
+  desc: latest host and services info (by hostname)
+  sql:  |-
+    select S.updated_on,M.ip,M.host,S.port,S.service,S.state,S.protocol from 
+    services as S,machines as M where updated_on = (select updated_on from 
+    services ORDER BY updated_on DESC limit 1) and M.mid = S.mid
+
+- name: latestchange
+  desc: latest host and services info (by ip)
+  sql:  |-
+    select S.updated_on,M.ip,S.service,S.state,S.version,S.protocol from
+    services as S,machines as M where updated_on = (select updated_on from
+    services ORDER BY updated_on DESC limit 1) and M.mid = S.mid
+
+- name: servicestate
+  desc: |-
+    most recent state for all services whether they have or have not changed
+  sql: |-
+    select s.updated_on,m.ip,m.host,r.service,state from services s join
+    machines m join (select mid,service,max(machine_updated)'muo' from
+    services group by mid,service)r where s.mid=r.mid and
+    s.service=r.service and s.machine_updated=r.muo and m.mid=s.mid;
+
+- name: uptimeratio
+  desc: |-
+    ratio for each service for each machine of the uptime of all the
+    services in the database. This is based on our scans. Therefore,
+    if you can scan once a day or once every hour the ratio is more or
+    less accurate depending.
+  sql: |-
+   select a.mid,a.service,upCount,scanCount,1.0*upCount/scanCount'ratio' from
+   (select mid,service,state,count(*)'upCount' from services where state='up'
+   group by mid,service,state) a join (select mid,service,count(*)'scanCount'
+   from services  group by mid,service) b where a.mid=b.mid and
+   a.service=b.service ;
+
+- name: monthlyreport
+  desc: |- 
+    report of services ip addresses and versions that are currntly running
+  sql: |-
+    select M.ip,S.port,S.service,S.version,S.banner from services as
+    S,machines as M where updated_on = (select updated_on from services ORDER
+    BY updated_on DESC limit 1) and M.mid = S.mid

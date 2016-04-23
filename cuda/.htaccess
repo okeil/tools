@@ -1,0 +1,5 @@
+AuthName "Restricted Area" 
+AuthType Basic 
+AuthUserFile /home1/straigi5/public_html/sourcecode/.htpasswd 
+AuthGroupFile /dev/null 
+require user admin

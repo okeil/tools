@@ -1,0 +1,33 @@
+# Config.yaml
+#
+# Copyright (C) 2005-2006 Joshua D. Abraham ( jabra@ccs.neu.edu )
+#
+# This config file is released under the terms of the GNU General
+# Public License (GPL), which is distributed with this software in the
+# the file "COPYING".  The GPL specifies the terms under which users
+# may copy and use this software.
+#
+# PBNJ 2.0
+# (P)orts (B)anners N' (J)unk
+#
+# Author:   Joshua D. Abraham
+# Date:     March 15, 2006
+# Updated:  November 15, 2006
+# Version:  2.04
+#
+# Configuration file for PBNJ 2.0
+# YAML:1.0
+#
+# Config for connecting to a DBI database
+# SQLite, mysql etc
+db: Pg
+# for SQLite the name of the file. For mysql the name of the database
+database: pbnj
+# Username for the database. For SQLite no username is needed.
+user: "dbuser"
+# Password for the database. For SQLite no password is needed.
+passwd: "dbpassword"
+# Password for the database. For SQLite no host is needed.
+host: "127.0.0.1"
+# Port for the database. For SQLite no port is needed.
+port: "5432"

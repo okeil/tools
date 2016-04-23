@@ -1,0 +1,124 @@
+//Udacity HW 4
+//Radix Sorting
+
+#include "utils.h"
+#include <thrust/host_vector.h>
+
+/* Red Eye Removal
+   ===============
+   
+   For this assignment we are implementing red eye removal.  This is
+   accomplished by first creating a score for every pixel that tells us how
+   likely it is to be a red eye pixel.  We have already done this for you - you
+   are receiving the scores and need to sort them in ascending order so that we
+   know which pixels to alter to remove the red eye.
+
+   Note: ascending order == smallest to largest
+
+   Each score is associated with a position, when you sort the scores, you must
+   also move the positions accordingly.
+
+   Implementing Parallel Radix Sort with CUDA
+   ==========================================
+
+   The basic idea is to construct a histogram on each pass of how many of each
+   "digit" there are.   Then we scan this histogram so that we know where to put
+   the output of each digit.  For example, the first 1 must come after all the
+   0s so we have to know how many 0s there are to be able to start moving 1s
+   into the correct position.
+
+   1) Histogram of the number of occurrences of each digit
+   2) Exclusive Prefix Sum of Histogram
+   3) Determine relative offset of each digit
+        For example [0 0 1 1 0 0 1]
+                ->  [0 1 0 1 2 3 2]
+   4) Combine the results of steps 2 & 3 to determine the final
+      output location for each element and move it there
+
+   LSB Radix sort is an out-of-place sort and you will need to ping-pong values
+   between the input and output buffers we have provided.  Make sure the final
+   sorted results end up in the output buffer!  Hint: You may need to do a copy
+   at the end.
+
+ */
+
+
+void your_sort(unsigned int* const d_inputVals,
+               unsigned int* const d_inputPos,
+               unsigned int* const d_outputVals,
+               unsigned int* const d_outputPos,
+               const size_t numElems)
+{ 
+
+//   1) Histogram of the number of occurrences of each digit
+	
+//   2) Exclusive Prefix Sum of Histogram
+//   3) Determine relative offset of each digit
+//        For example [0 0 1 1 0 0 1]
+//                ->  [0 1 0 1 2 3 2]
+//   4) Combine the results of steps 2 & 3 to determine the final
+//      output location for each element and move it there
+
+// SERIAL HOST IMPLEMENTAITION
+	unsigned int * h_inputVals, * h_inputPos;
+	unsigned int *h_outputVals = new unsigned int[numElems]; 
+	unsigned int *h_outputPos = new unsigned int[numElems]; 
+	checkCudaErrors(cudaMemcpy(&h_inputVals, d_inputVals, (sizeof(unsigned int) * numElems), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(&h_inputPos, d_inputPos, (sizeof(unsigned int) * numElems), cudaMemcpyDeviceToHost));
+
+  const int numBits = 1;
+  const int numBins = 1 << numBits;
+
+  unsigned int *binHistogram = new unsigned int[numBins];
+  unsigned int *binScan      = new unsigned int[numBins];
+
+  unsigned int *vals_src = h_inputVals;
+  unsigned int *pos_src  = h_inputPos;
+
+  unsigned int *vals_dst = h_outputVals;
+  unsigned int *pos_dst  = h_outputPos;
+
+  //a simple radix sort - only guaranteed to work for numBits that are multiples of 2
+  for (unsigned int i = 0; i < 8 * sizeof(unsigned int); i += numBits) {
+    unsigned int mask = (numBins - 1) << i;
+
+    memset(binHistogram, 0, sizeof(unsigned int) * numBins); //zero out the bins
+    memset(binScan, 0, sizeof(unsigned int) * numBins); //zero out the bins
+
+    //perform histogram of data & mask into bins
+    for (unsigned int j = 0; j < numElems; ++j) {
+      unsigned int bin = (vals_src[j] & mask) >> i;
+      binHistogram[bin]++;
+    }
+
+    //perform exclusive prefix sum (scan) on binHistogram to get starting
+    //location for each bin
+    for (unsigned int j = 1; j < numBins; ++j) {
+      binScan[j] = binScan[j - 1] + binHistogram[j - 1];
+    }
+
+    //Gather everything into the correct location
+    //need to move vals and positions
+    for (unsigned int j = 0; j < numElems; ++j) {
+      unsigned int bin = (vals_src[j] & mask) >> i;
+      vals_dst[binScan[bin]] = vals_src[j];
+      pos_dst[binScan[bin]]  = pos_src[j];
+      binScan[bin]++;
+    }
+
+    //swap the buffers (pointers only)
+    std::swap(vals_dst, vals_src);
+    std::swap(pos_dst, pos_src);
+  }
+
+  //we did an even number of iterations, need to copy from input buffer into output
+  std::copy(h_inputVals, h_inputVals + numElems, h_outputVals);
+  std::copy(h_inputPos, h_inputPos + numElems, h_outputPos);
+	
+	checkCudaErrors(cudaMemcpy(&d_outputPos, h_outputPos, (sizeof(unsigned int) * numElems), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(&d_outputVals, h_outputVals, (sizeof(unsigned int) * numElems), cudaMemcpyHostToDevice));
+
+  delete[] binHistogram;
+  delete[] binScan;
+}
+
