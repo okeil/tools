@@ -11,7 +11,7 @@ from datetime import date
 #########################################################################
 # Pre-reqs - 
 # sudo pip install -I google-api-python-client==1.3.2 --ignore-installed six
-# Authorize APO https://developers.google.com/drive/v3/web/quickstart/python#step_1_turn_on_the_api_name
+# Authorize API https://developers.google.com/drive/v3/web/quickstart/python#step_1_turn_on_the_api_name
 # Download the client_secret.json to same dir as this script
 #########################################################################
 #########################################################################
