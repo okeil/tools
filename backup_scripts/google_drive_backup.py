@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from __future__ import print_function
 import sys, httplib2, os, datetime, io
-from googleapiclient.http import MediaIoBaseDownload
 from time import gmtime, strftime
 from apiclient import discovery
 import oauth2client
@@ -64,16 +63,10 @@ def downloadFile(file_name, file_id, mimeType, service):
         else: 
             request = service.files().export_media(fileId=file_id, mimeType='application/pdf')
             file_name = file_name + ".pdf"
-    #fh = io.FileIO(file_name, mode='wb')
-    #downloader = MediaIoBaseDownload(fh, request, chunksize=1024*1024)
     print("Downloading -- " + file_name)
     response = request.execute()
     with open(os.path.join(OUTPUT_DIR, file_name), "wb") as wer:
         wer.write(response)
-    #done = False
-    #while done is False:
-        #status, done = downloader.next_chunk()
-        #print(float(status.progress()*100), done)
 
 def listFiles(service):
     def getPage(pageTok):
