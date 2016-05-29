@@ -1,0 +1,60 @@
+.results_box {
+    display: table;
+	width:auto;
+	border:2px solid;
+	margin-bottom: 10px;
+}
+
+.small_heading {
+	font-size: large;
+    display: table-cell;
+}
+
+.links_heading {
+	display:inline;
+}
+
+.top_row  {
+    display: table-row;
+	width:auto;
+	clear:both;
+	font-family: "Georgia";
+	font-weight: bold;
+}
+
+.row_head  {
+    display: table-row;
+	width:auto;
+	clear:both;
+	font-family: "Georgia";
+	font-weight: bold;
+}
+
+.row  {
+    display: table-row;
+	width:auto;
+	clear:both;
+	font-family: "Georgia";
+}
+
+.row:nth-child(odd) {background: #e0e0e0;}
+
+.highlighted {
+	color: red;
+}
+  
+.td {
+    display: table-cell;
+	width: auto;
+	border:1px solid;
+	border-color: gray;
+	padding: 2px 5px 2px 5px; 
+	
+}
+.th {
+    display: table-cell;
+	width: auto;
+	border:1px solid;
+	border-color: gray;
+	padding: 2px 5px 2px 5px;
+}

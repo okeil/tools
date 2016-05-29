@@ -1,0 +1,41 @@
+# SSL check Web Site
+<VirtualHost *:80>
+	ServerName ssl.mwc.ninja
+	ServerAdmin webmaster@mwc.ninja
+
+	DocumentRoot /var/www/sites/ssl_site
+	DirectoryIndex index.html
+	
+	<Directory /var/www/sites/ssl_site>
+		AllowOverride all
+		Options +Indexes
+	</Directory>
+
+	ErrorLog /var/log/httpd/ssl_site_error.log
+	LogLevel warn
+	CustomLog /var/log/httpd/ssl_site_access.log combined
+</VirtualHost>
+
+<VirtualHost *:443>
+	ServerName ssl.mwc.ninja
+	ServerAdmin webmaster@assetowl.com
+
+	DocumentRoot /var/www/sites/ssl_site
+	DirectoryIndex index.html
+
+	<Directory /var/www/sites/ssl_site>
+		AllowOverride all
+		Options +Indexes
+	</Directory>
+
+	ErrorLog /var/log/httpd/ssl_ssl_site_error.log
+	LogLevel warn
+	CustomLog /var/log/httpd/ssl_ssl_site_access.log combined
+
+	SSLEngine on
+	SSLCipherSuite ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS:!RC4
+	SSLCertificateKeyFile /etc/pki/apache/wildcard.mwc.ninja.201510.key.pem
+	SSLCertificateFile /etc/pki/apache/wildcard.mwc.ninja.201510.cert.pem
+	SSLCACertificateFile /etc/pki/ca-trust/source/anchors/ca.mwc.ninja.pem
+</VirtualHost>
+# EOF
